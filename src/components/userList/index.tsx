@@ -13,7 +13,7 @@ import {
     unblockUser, 
     setErrorMessage
 } from '../../store/slices/usersSlice';
-import ErrorAlert from '../errorAlert';
+import Alert from '../alert';
 
 const UserList = () => {
     const {
@@ -40,7 +40,7 @@ const UserList = () => {
             },
             {
                 user_id: 2,
-                display_name: "Jane Doe",
+                display_name: "Jane Doe Jane Doe Jane Doe Jane Doe Jane Doe Jane Doe Jane Doe Jane Doe",
                 profile_image: "https://via.placeholder.com/150",
                 reputation: 200
             },
@@ -82,7 +82,9 @@ const UserList = () => {
         <div className="py-5">
             <h1 className="text-2xl text-gray-900 mb-2">Users</h1>
 
-            {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
+            <Alert>No internet connection</Alert>
+
+            {errorMessage && <Alert type="danger">{errorMessage}</Alert>}
 
             {users && users.length > 0 && users.map((user: User) => {
                 const followed = followedUsers ? followedUsers.includes(user.user_id) : false;

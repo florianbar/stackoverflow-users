@@ -4,7 +4,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
     return (
-        <div className="mx-auto max-w-xl px-4 sm:px-0">
+        <div className="mx-auto max-w-md px-4 sm:px-0">
             {children}
         </div>
     );
