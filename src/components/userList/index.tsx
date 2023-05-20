@@ -1,11 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 import { STACK_EXCHANGE_USERS_API } from '../../constants/api';
 import { User } from '../../types/user';
+import UserListItem from './item';
 
 const UserList = () => {
     const [users, setUsers] = useState<User[] | null>(null);
+
+    const [followedUsers, setFollowedUsers] = useState<number[] | null>(null);
+    const [blockedUsers, setBlockedUsers] = useState<number[] | null>(null);
+
+    const { isOnline } = useNetworkStatusChecker();
 
     useEffect(() => {
         axios.get(STACK_EXCHANGE_USERS_API)
@@ -30,27 +36,65 @@ const UserList = () => {
                 // always executed
             });
     }, []);
-    
+
+    const followUser = (userId: number) => {
+        if (blockedUsers && blockedUsers.includes(userId)) {
+            return;
+        }
+
+        if (followedUsers) {
+            return setFollowedUsers([...followedUsers, userId]);
+        }    
+        setFollowedUsers([userId]);
+    };
+
+    const unfollowUser = (userId: number) => {
+        if (followedUsers) {
+            const filteredUsers = followedUsers.filter((id: number) => id !== userId);
+            setFollowedUsers(filteredUsers);
+        }
+    };
+
+    const blockUser = (userId: number) => {
+        if (followedUsers && followedUsers.includes(userId)) {
+            const filteredUsers = followedUsers.filter((id: number) => id !== userId);
+            setFollowedUsers(filteredUsers);
+        }
+
+        if (blockedUsers) {
+            return setBlockedUsers([...blockedUsers, userId]);
+        }
+        setBlockedUsers([userId]);
+    };
+
+    const unblockUser = (userId: number) => {
+        if (blockedUsers) {
+            const filteredUsers = blockedUsers.filter((id: number) => id !== userId);
+            setBlockedUsers(filteredUsers);
+        }
+    };
+
     return (
         <div className="py-5">
+            <h1 className="text-2xl text-gray-900 mb-2">
+                Users
+            </h1>
+
             {users && users.length > 0 && users.map((user: User) => {
+                const followed = followedUsers ? followedUsers.includes(user.user_id) : false;
+                const blocked = blockedUsers ? blockedUsers.includes(user.user_id) : false;
+
                 return (
-                    <div 
-                        key={user.user_id}
-                        className="mb-2 p-4 bg-gray-100 rounded-2xl"
-                    >
-                        <div className="flex space-x-4 items-center">
-                            <div className="w-16 h-16 rounded-full overflow-hidden">
-                                <img 
-                                    src={user.profile_image} 
-                                    alt={user.display_name} 
-                                />
-                            </div>
-                            <div>
-                                <p className="text-lg font-bold text-gray-800">{user.display_name}</p>
-                                <p>Reputation: {user.reputation}</p>
-                            </div>
-                        </div>
+                    <div key={user.user_id}>
+                        <UserListItem
+                            user={user}
+                            followed={followed}
+                            blocked={blocked}
+                            followUser={() => followUser(user.user_id)}
+                            unfollowUser={() => unfollowUser(user.user_id)}
+                            blockUser={() => blockUser(user.user_id)}
+                            unblockUser={() => unblockUser(user.user_id)}
+                        />
                     </div>
                 );
             })}
