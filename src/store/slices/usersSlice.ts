@@ -1,16 +1,30 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+type initialStateType = {
+    users: any[],
+    usersLoading: boolean,
+    pageNumber: number,
+    followedUsers: number[],
+    blockedUsers: number[],
+    errorMessage: string | null
+};
+
 export const usersReducer = createSlice({
   name: "users",
   initialState: {
     users: [],
+    usersLoading: false,
+    pageNumber: 1,
     followedUsers: [],
     blockedUsers: [],
     errorMessage: null
-  },
+  } as initialStateType,
   reducers: {
     setUsers: (state: any, action: PayloadAction<any>) => {
         state.users = action.payload;
+    },
+    setUsersLoading: (state: any, action: PayloadAction<boolean>) => {
+        state.usersLoading = action.payload;
     },
     setErrorMessage: (state: any, action: PayloadAction<any>) => {
         state.errorMessage = action.payload;
@@ -43,6 +57,15 @@ export const usersReducer = createSlice({
     unblockUser: (state: any, action: PayloadAction<number>) => {
         // remove user from blockedUsers
         state.blockedUsers = state.blockedUsers.filter((id: number) => id !== action.payload);
+    },
+    incrementPageNumber: (state: any) => {
+        state.pageNumber++;
+    },
+    decrementPageNumber: (state: any) => {
+        state.pageNumber = state.pageNumber > 1 ? state.pageNumber - 1 : 1;
+    },
+    setPageNumber: (state: any, action: PayloadAction<number>) => {
+        state.pageNumber = action.payload;
     }
   },
 })
@@ -50,11 +73,15 @@ export const usersReducer = createSlice({
 // Action creators are generated for each case reducer function
 export const { 
     setUsers, 
+    setUsersLoading,
     setErrorMessage,
     followUser, 
     unfollowUser,
     blockUser, 
-    unblockUser 
+    unblockUser,
+    incrementPageNumber,
+    decrementPageNumber,
+    setPageNumber
 } = usersReducer.actions
 
 export default usersReducer.reducer

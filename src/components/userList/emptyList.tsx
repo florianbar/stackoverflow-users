@@ -1,4 +1,4 @@
-const itemCount = 8; // Or something else
+const itemCount = 20;
 
 const EmptyList = () => {
     return (
