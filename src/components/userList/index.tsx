@@ -1,23 +1,61 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import axios from 'axios';
 
+import { useAppSelector, useAppDispatch } from '../../hooks/redux'; 
 import { STACK_EXCHANGE_USERS_API } from '../../constants/api';
 import { User } from '../../types/user';
 import UserListItem from './item';
+import { 
+    setUsers, 
+    followUser, 
+    unfollowUser, 
+    blockUser, 
+    unblockUser, 
+    setErrorMessage
+} from '../../store/slices/usersSlice';
+import ErrorAlert from '../errorAlert';
 
 const UserList = () => {
-    const [users, setUsers] = useState<User[] | null>(null);
-
-    const [followedUsers, setFollowedUsers] = useState<number[] | null>(null);
-    const [blockedUsers, setBlockedUsers] = useState<number[] | null>(null);
-
-    const { isOnline } = useNetworkStatusChecker();
+    const {
+        users,
+        followedUsers,
+        blockedUsers,
+        errorMessage
+    } = useAppSelector((state: any) => state.users);
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
+        if (localStorage.getItem("users")) {
+            const cachedUsers = JSON.parse(localStorage.getItem("users") || "");
+            dispatch(setUsers(cachedUsers));
+            console.log("[cachedUsers]", cachedUsers);
+        }
+
+        const mockedUsers: User[] = [
+            {
+                user_id: 1,
+                display_name: "John Doe",
+                profile_image: "https://via.placeholder.com/150",
+                reputation: 100
+            },
+            {
+                user_id: 2,
+                display_name: "Jane Doe",
+                profile_image: "https://via.placeholder.com/150",
+                reputation: 200
+            },
+            {
+                user_id: 3,
+                display_name: "John Smith",
+                profile_image: "https://via.placeholder.com/150",
+                reputation: 300
+            },
+        ];
+        dispatch(setUsers(mockedUsers));
+
         axios.get(STACK_EXCHANGE_USERS_API)
             .then(function (response) {
                 // handle success
-                console.log("success", response.data.items);
                 const userData = response.data.items.map((item: User) => {
                     return {
                         user_id: item.user_id,
@@ -26,59 +64,25 @@ const UserList = () => {
                         reputation: item.reputation
                     }
                 });
-                setUsers(userData);
+                console.log("[userData]", userData);
+                dispatch(setUsers(userData));
+                localStorage.setItem("users", JSON.stringify(userData));
             })
             .catch(function (error) {
                 // handle error
-                console.log("error", error);
+                console.log("[error]", error);
+                dispatch(setErrorMessage(error.message));
             })
             .finally(function () {
                 // always executed
             });
-    }, []);
-
-    const followUser = (userId: number) => {
-        if (blockedUsers && blockedUsers.includes(userId)) {
-            return;
-        }
-
-        if (followedUsers) {
-            return setFollowedUsers([...followedUsers, userId]);
-        }    
-        setFollowedUsers([userId]);
-    };
-
-    const unfollowUser = (userId: number) => {
-        if (followedUsers) {
-            const filteredUsers = followedUsers.filter((id: number) => id !== userId);
-            setFollowedUsers(filteredUsers);
-        }
-    };
-
-    const blockUser = (userId: number) => {
-        if (followedUsers && followedUsers.includes(userId)) {
-            const filteredUsers = followedUsers.filter((id: number) => id !== userId);
-            setFollowedUsers(filteredUsers);
-        }
-
-        if (blockedUsers) {
-            return setBlockedUsers([...blockedUsers, userId]);
-        }
-        setBlockedUsers([userId]);
-    };
-
-    const unblockUser = (userId: number) => {
-        if (blockedUsers) {
-            const filteredUsers = blockedUsers.filter((id: number) => id !== userId);
-            setBlockedUsers(filteredUsers);
-        }
-    };
+    }, [dispatch]);
 
     return (
         <div className="py-5">
-            <h1 className="text-2xl text-gray-900 mb-2">
-                Users
-            </h1>
+            <h1 className="text-2xl text-gray-900 mb-2">Users</h1>
+
+            {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
 
             {users && users.length > 0 && users.map((user: User) => {
                 const followed = followedUsers ? followedUsers.includes(user.user_id) : false;
@@ -90,10 +94,10 @@ const UserList = () => {
                             user={user}
                             followed={followed}
                             blocked={blocked}
-                            followUser={() => followUser(user.user_id)}
-                            unfollowUser={() => unfollowUser(user.user_id)}
-                            blockUser={() => blockUser(user.user_id)}
-                            unblockUser={() => unblockUser(user.user_id)}
+                            followUser={() => dispatch(followUser(user.user_id))}
+                            unfollowUser={() => dispatch(unfollowUser(user.user_id))}
+                            blockUser={() => dispatch(blockUser(user.user_id))}
+                            unblockUser={() => dispatch(unblockUser(user.user_id))}
                         />
                     </div>
                 );
