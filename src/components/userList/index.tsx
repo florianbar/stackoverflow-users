@@ -1,8 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import axios from 'axios';
 
 import { useAppSelector, useAppDispatch } from '../../hooks/redux'; 
-import { STACK_EXCHANGE_USERS_API } from '../../constants/api';
 import { User } from '../../types/user';
 import UserListItem from './item';
 import { 
@@ -21,6 +19,7 @@ import Alert from '../alert';
 import EmptyList from './emptyList';
 import Button from '../button';
 import Pagination from './pagination';
+import { getUsers } from '../../utils/api';
 
 const UserList = () => {
     const {
@@ -41,8 +40,9 @@ const UserList = () => {
     const showEmptyList = useMemo(() => {
         if (users && users.length === 0) return true;
         if (usersLoading) return true;
+        if (errorMessage) return true;
         return false;
-    }, [usersLoading, users]);
+    }, [usersLoading, users, errorMessage]);
 
     useEffect(() => {
         let paginatedUsers: any[] = [];
@@ -57,15 +57,14 @@ const UserList = () => {
             return;
         }
 
-        dispatch(setUsers(null));
-
         console.log("axios call");
 
+        dispatch(setUsers(null));
         dispatch(setUsersLoading(true));
 
-        axios.get(`${STACK_EXCHANGE_USERS_API}&page=${pageNumber}`)
-            .then(function (response) {
-                // handle success
+        async function fetchUserData() {
+            try {
+                const response = await getUsers(pageNumber);
                 const userData = response.data.items.map((item: User) => {
                     return {
                         user_id: item.user_id,
@@ -75,26 +74,25 @@ const UserList = () => {
                     }
                 });
                 dispatch(setUsers(userData));
+                dispatch(setUsersLoading(false));
 
                 paginatedUsers[pageNumber-1] = { users: userData };
-                // console.log("paginatedUsers", paginatedUsers);
                 localStorage.setItem("users", JSON.stringify(paginatedUsers));
-            })
-            .catch(function (error) {
-                // handle error
+            } catch (error: any) {
                 console.log("[error]", error);
                 dispatch(setErrorMessage(error.message));
-            })
-            .finally(function () {
-                // always executed
                 dispatch(setUsersLoading(false));
-            });
+            }
+        }
+        fetchUserData();
     }, [dispatch, pageNumber]);
 
     return (
         <div className="py-5">
             <div className="sm:flex sm:justify-between items-center mb-8 text-center sm:text-left">
-                <h1 className="text-2xl text-gray-900 mb-1 sm:mb-0">StackOverflow Users</h1>
+                <h1 className="text-2xl text-gray-900 mb-1 sm:mb-0">
+                    StackOverflow Users
+                </h1>
                 <Button 
                     buttonType="primary"
                     onClick={() => clearUsersFromLocalStorage()}
