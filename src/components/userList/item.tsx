@@ -27,7 +27,9 @@ const UserListItem = ({
 
     return (
         <div 
-            className={`relative mb-2 p-3 pr-10 cursor-pointer rounded-2xl border ${blocked ? "bg-gray-100 border-gray-100" : "bg-white border-gray-200/75 shadow-sm hover:shadow-md"}`}
+            className={`relative mb-2 p-3 pr-10 cursor-pointer rounded-2xl border 
+                ${blocked ? "bg-gray-100 border-gray-100" : "bg-white border-gray-200/75 shadow-sm hover:shadow-md"}
+            `}
             onClick={() => setIsOpen(!isOpen)}
         >
             {followed && (
